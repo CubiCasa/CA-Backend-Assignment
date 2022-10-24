@@ -1,0 +1,33 @@
+version: '3.4'
+
+services:
+  db:
+    image: postgres:9.5
+    environment:
+      POSTGRES_DB: yfj
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+  stats:
+    image: stats
+    build:
+      context: stats
+      dockerfile: Dockerfile
+    ports:
+      - "8000:5000"
+    volumes:
+      - ./stats:/app
+  yfj:
+    image: yfj
+    build:
+      context: yfj
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    env_file:
+      - ./yfj/.env
+    ports:
+      - "9000:5000"
+    volumes:
+      - ./yfj:/app
