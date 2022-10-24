@@ -61,7 +61,7 @@ The above instructions are given for Linux user, please adapt to your system if 
     - Please update migration when adding new models
     - Please make GIT commits as small as possible so we can review your development process step by step.
 
-- You have 2 weeks to complete this assigment and submit your result to openpositions@cubicasa.com with following checklist:
+- You have 2 weeks to complete this assignment and submit your result to openpositions@cubicasa.com with following checklist:
     - GIT repo for your source code
     - Documentation files for your YFI RESTfull web service (Optional)
     - Screen shots to demo how your application running (Optional)
