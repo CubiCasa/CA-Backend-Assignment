@@ -11,6 +11,6 @@ migrate = Migrate()
 
 def init(app: Flask) -> None:
     db.init_app(app)
-    from app import models
+    from .model import User
     migrate.init_app(app, db)
 
