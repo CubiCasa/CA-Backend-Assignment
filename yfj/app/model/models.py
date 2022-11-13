@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, SmallInteger, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey
 from sqlalchemy import inspect
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
 
@@ -8,8 +9,8 @@ from app.database import db
 
 
 class Model:
-    created_at = Column(DateTime())
-    updated_at = Column(DateTime())
+    created_at = Column(DateTime, server_default=db.func.now())
+    updated_at = Column(DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
 
     def serialize(self) -> dict:
         """Serialize the object attributes values into a dictionary."""
@@ -37,6 +38,7 @@ class User(db.Model, Model, SerializerMixin):
         school_name = (String(255), nullable=True)
         user_type = (Enum(UserTypes))
         gender = (Enum(Genders))
+        jobs = ARRAY string
     Attributes:
         username (str): User's username
         password (str): User's password
@@ -47,6 +49,7 @@ class User(db.Model, Model, SerializerMixin):
         school_name (str): User's school_name
         user_type (str): User's user_type
         gender (str): User's gender
+        jobs (array): Jobs array
     """
 
     __tablename__ = 'users'
@@ -62,6 +65,7 @@ class User(db.Model, Model, SerializerMixin):
     user_type = Column(Enum(UserTypes))
     gender = Column(Enum(Genders))
     user_school_performances = relationship("UserSchoolPerformance")
+    jobs = Column(ARRAY(String))
 
     def __init__(self, username: str = None, password: str = None, first_name: str = None,
                  last_name: str = None, email: str = None, address: str = None, school_name: str = None,
@@ -131,7 +135,7 @@ class UserSchoolPerformance(db.Model, Model, SerializerMixin):
     __tablename__ = 'user_school_performances'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(String, ForeignKey('users.id'))
     math = Column(Integer, nullable=True)
     physics = Column(Integer, nullable=True)
     chemistry = Column(Integer, nullable=True)
