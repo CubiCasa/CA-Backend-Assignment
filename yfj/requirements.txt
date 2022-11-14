@@ -32,3 +32,4 @@ Werkzeug==2.1.2
 wrapt==1.14.1
 zipp==3.8.0
 SQLAlchemy-serializer==1.4.1
+flask-restful==0.3.9

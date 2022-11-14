@@ -2,21 +2,16 @@
 group, views related to the index endpoint of HTTP REST API.
 """
 
-
 from flask import Blueprint
-
+from flask_restful import Api, Resource, url_for
 
 bp = Blueprint('index', __name__, url_prefix='')
+api = Api(bp)
 
 
-@bp.route('/', methods=['GET'])
-def index() -> str:
-    """This function is responsible to deal with requests
-    coming from index URL. It return a simple text indicating
-    the server is running.
+class TodoItem(Resource):
+    def get(self, id):
+        return {'task': 'Say "Hello, World!"'}
 
-    Returns:
-        str: a text message
-    """
 
-    return "The server is runing!"
+api.add_resource(TodoItem, '/todos/<int:id>')
