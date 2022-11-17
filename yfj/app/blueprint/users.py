@@ -56,15 +56,58 @@ class UserListAdd(BaseResource):
         return user.to_dict(rules=('-password',))
 
 
-class UserRetrievedUpdate(Resource):
+class UserRetrievedUpdate(BaseResource):
+    parser = reqparse.RequestParser()
+    user_repository = UserRepository()
+
     def get(self, id):
-        return {'task': 'Get a user'}
+        """
+            This api help get a user
+        """
+        user_repository = UserRepository()
+        user = user_repository.get(id)
+        if not user:
+            abort(404, message=TranslationText.UserNotFound)
+        return user.to_dict()
 
     def put(self, id):
-        return {'task': 'Update a user'}
+        """
+            This api help update a user
+        """
+        user = self.user_repository.get(id)
+        if not user:
+            abort(404)
+        self.parser.add_argument('username', type=str, required=True, help='Username is required')
+        self.parser.add_argument('first_name', type=str, required=True, help='First name is required')
+        self.parser.add_argument('last_name', type=str, required=True, help='Last name is required')
+        self.parser.add_argument('email', type=str, required=True, help='Email is required')
+        self.parser.add_argument('address', type=str, required=False)
+        self.parser.add_argument('school_name', type=str, required=False)
+        self.parser.add_argument('user_type', type=int, required=True)
+        self.parser.add_argument('gender', type=int, required=True)
+        args = self.parser.parse_args()
+
+        user.username = args.get('username')
+        user.first_name = args.get('first_name')
+        user.last_name = args.get('last_name')
+        user.email = args.get('email')
+        user.address = args.get('address')
+        user.school_name = args.get('school_name')
+        user.user_type = UserTypes(args.get('user_type'))
+        user.gender = Genders(args.get('gender'))
+        self.user_repository.update(user)
+
+        return user.to_dict(rules=('-password',))
 
     def delete(self, id):
-        return {'task': 'Delete a user'}
+        """
+            This api help delete a user
+        """
+        user = self.user_repository.get(id)
+        if not user:
+            abort(404)
+        self.user_repository.delete(user)
+        return None
 
 
 class UserListAddSchoolPerformance(Resource):
