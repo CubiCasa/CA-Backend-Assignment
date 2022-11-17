@@ -34,6 +34,8 @@ class Production(Default):
     SECRET_KEY = b'\xacP=\x12\xa6\xa2\x19`\xbcu{\x0b\xe4&H\x8d'
     JWT_SECRET_KEY = b'\xacP=\x12\xa6\xa2\x19`\xbcu{\x0b\xe4&H\x8d'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    STATS_URL = os.environ.get('STATS_URL')
+    SQLALCHEMY_ENGINE_OPTIONS = dict(isolation_level='READ COMMITTED')
 
 
 class Development(Default):
@@ -53,3 +55,5 @@ class Development(Default):
     SECRET_KEY = 'dev'
     JWT_SECRET_KEY = 'dev'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    STATS_URL = os.environ.get('STATS_URL')
+    SQLALCHEMY_ENGINE_OPTIONS = dict(isolation_level='READ COMMITTED')
