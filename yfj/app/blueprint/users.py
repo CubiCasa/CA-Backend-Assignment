@@ -203,9 +203,64 @@ class UserRetrieveUpdateSchoolPerformance(BaseResource):
         return None
 
 
-class UserGetAdviceJobs(Resource):
+class UserGetAdviceJobs(BaseResource):
+    parser = reqparse.RequestParser()
+    user_performance_repository = UserSchoolPerformanceRepository()
+    user_repository = UserRepository()
+
+    def get_list_job(self):
+        api_client = ApiClient()
+        return api_client.get('/job_earnings')
+
+    def calculate_r2(self, row, performance_x):
+        performance_y = np.array(
+            list([row['math'], row['physics'], row['chemistry'], row['biology'], row['literature'], row['history'],
+                  row['geography'], row['phylosophy'], row['art'], row['foreign_language']])).reshape(-1, 1)
+        model_data = linear_model.LinearRegression()
+        mwr = model_data.fit(performance_x, performance_y)
+        return mwr.score(performance_x, performance_y)
+
+    def get_3_jobs(self, user_ids):
+        jobs = []
+        for user_id in user_ids:
+            match_user = self.user_repository.get(user_id)
+            if match_user:
+                for job in match_user.jobs:
+                    jobs.append(job)
+                    if len(jobs) >= 3:
+                        return jobs
+        return jobs
+
     def get(self, id):
-        return {'task': 'get advice jobs'}
+        """
+            This api help get advice job for student
+        """
+        user_repository = UserRepository()
+        user = user_repository.get(id)
+        if not user:
+            abort(404, message=TranslationText.UserNotFound)
+        user_sum_performance = self.user_performance_repository.get_sum_by_user(id)
+        if not user_sum_performance:
+            abort(400, message=TranslationText.PerformanceNotFound)
+        list_performances = self.user_performance_repository.get_list_sum()
+        df = pd.DataFrame(list_performances)
+        performance_x = np.array([user_sum_performance[0].math, user_sum_performance[0].physics,
+                                  user_sum_performance[0].chemistry, user_sum_performance[0].biology,
+                                  user_sum_performance[0].literature, user_sum_performance[0].history,
+                                  user_sum_performance[0].geography, user_sum_performance[0].phylosophy,
+                                  user_sum_performance[0].art, user_sum_performance[0].foreign_language]).reshape(-1, 1)
+        df['r2'] = df.apply(lambda row: self.calculate_r2(row, performance_x), axis=1)
+        df = df.sort_values(by='r2', ascending=False)
+        job_earning = self.get_list_job().json()
+        job_earning_df = pd.DataFrame(job_earning, columns=['job', 'earn'])
+        if df.empty:
+            return {'jobs': list(job_earning_df.sort_values('earn', ascending=False).head(3)['job'])}
+        match_jobs = self.get_3_jobs(list(df.iloc[:3].user_id))
+        job_earning_df['job'] = job_earning_df['job'].str.lower()
+        if match_jobs and len(match_jobs) >= 0:
+            return {'job': match_jobs}
+        else:
+            return {'jobs': list(job_earning_df.sort_values('earn', ascending=False).head(3)['job'])}
 
 
 class UserPostCurrentJobs(Resource):
