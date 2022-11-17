@@ -15,7 +15,7 @@ class UserRepository(Repository):
         Repository.__init__(self, User)
 
     def get_by_username(self, username: str) -> User:
-        """Retrive a users from database by its username.
+        """Retrieve a users from database by its username.
         Parameters:
            username (str): The username of the user.
         Returns:
@@ -23,6 +23,9 @@ class UserRepository(Repository):
         """
 
         return self.session.query(User).filter_by(username=username).first()
+
+    def get_by_id(self, id: str) -> User:
+        return self.session.query(User).filter_by(id=id).first()
 
     def save(self, user: User) -> None:
         """Saves a user in the database.
@@ -39,8 +42,6 @@ class UserRepository(Repository):
         Parameters:
            model (object): A user model object.
         """
-
-        user.password = generate_password_hash(user.password)
         self.session.commit()
 
     def authenticate(self, username: str, password: str) -> bool:
@@ -84,7 +85,7 @@ class UserRepository(Repository):
             if (not user.id) or (user.id != user_checking.id):
                 invalid.append({"username": "is already in use."})
 
-         # remove from the session if it is not valid
+        # remove from the session if it is not valid
         if invalid:
             user.remove_session()
 
