@@ -1,31 +1,14 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey
-from sqlalchemy import inspect
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Float
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
+import uuid
 
+from app.base.base_model import BaseModel
 from app.base.constants import UserTypes, Genders
-from app.database import db
 
 
-class Model:
-    created_at = Column(DateTime, server_default=db.func.now())
-    updated_at = Column(DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
-
-    def serialize(self) -> dict:
-        """Serialize the object attributes values into a dictionary."""
-
-        return {}
-
-    def remove_session(self):
-        """Removes an object from the session its current session."""
-
-        session = inspect(self).session
-        if session:
-            session.expunge(self)
-
-
-class User(db.Model, Model, SerializerMixin):
+class User(BaseModel, SerializerMixin):
     """ User's model class.
     Column:
         id = (String(36), primary_key=True)
@@ -53,8 +36,9 @@ class User(db.Model, Model, SerializerMixin):
     """
 
     __tablename__ = 'users'
+    serialize_rules = ('-password',)
 
-    id = Column(String(36), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     username = Column(String(255), unique=True)
     password = Column(String(255))
     first_name = Column(String(255))
@@ -67,16 +51,19 @@ class User(db.Model, Model, SerializerMixin):
     user_school_performances = relationship("UserSchoolPerformance")
     jobs = Column(ARRAY(String))
 
-    def __init__(self, username: str = None, password: str = None, first_name: str = None,
-                 last_name: str = None, email: str = None, address: str = None, school_name: str = None,
-                 user_type: str = None, gender: str = None) -> None:
+    def __init__(self, username: str = None, password: str = None, first_name: str = None, last_name: str = None,
+                 email: str = None, address: str = None, school_name: str = None, user_type: UserTypes = None,
+                 gender: Genders = None) -> None:
         """ The constructor for User class.
         Parameters:
             username (str): User's username
             password (str): User's password
         """
+        super().__init__()
+        self.id = uuid.uuid4()
         self.username = username
-        self.password = password
+        if password:
+            self.password = password
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
@@ -93,7 +80,7 @@ class User(db.Model, Model, SerializerMixin):
 
         data = {
             'id': self.id,
-            'username': self.username
+            'username': self.username,
         }
 
         return data
@@ -102,7 +89,7 @@ class User(db.Model, Model, SerializerMixin):
         return '<User %r>' % (self.username)
 
 
-class UserSchoolPerformance(db.Model, Model, SerializerMixin):
+class UserSchoolPerformance(BaseModel, SerializerMixin):
     """ User performance's model class.
         Column:
             id = (Integer, primary_key=True)
@@ -134,18 +121,18 @@ class UserSchoolPerformance(db.Model, Model, SerializerMixin):
 
     __tablename__ = 'user_school_performances'
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(String, ForeignKey('users.id'))
-    math = Column(Integer, nullable=True)
-    physics = Column(Integer, nullable=True)
-    chemistry = Column(Integer, nullable=True)
-    biology = Column(Integer, nullable=True)
-    literature = Column(Integer, nullable=True)
-    history = Column(Integer, nullable=True)
-    geography = Column(Integer, nullable=True)
-    phylosophy = Column(Integer, nullable=True)
-    art = Column(Integer, nullable=True)
-    foreign_language = Column(Integer, nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
+    math = Column(Float, nullable=True)
+    physics = Column(Float, nullable=True)
+    chemistry = Column(Float, nullable=True)
+    biology = Column(Float, nullable=True)
+    literature = Column(Float, nullable=True)
+    history = Column(Float, nullable=True)
+    geography = Column(Float, nullable=True)
+    phylosophy = Column(Float, nullable=True)
+    art = Column(Float, nullable=True)
+    foreign_language = Column(Float, nullable=True)
 
     def __init__(self, user_id: int = None, math: int = None, physics: int = None, chemistry: int = None,
                  biology: int = None, literature: int = None, history: int = None, geography: int = None,
@@ -155,6 +142,8 @@ class UserSchoolPerformance(db.Model, Model, SerializerMixin):
             username (str): User's username
             password (str): User's password
         """
+        super().__init__()
+        self.id = uuid.uuid4()
         self.user_id = user_id
         self.math = math
         self.physics = physics
