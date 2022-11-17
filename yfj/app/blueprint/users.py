@@ -110,23 +110,97 @@ class UserRetrievedUpdate(BaseResource):
         return None
 
 
-class UserListAddSchoolPerformance(Resource):
+class UserListAddSchoolPerformance(BaseResource):
+    parser = reqparse.RequestParser()
+    user_performance_repository = UserSchoolPerformanceRepository()
+
     def get(self, id):
-        return {'task': 'Get list school performance for a user'}
+        """
+            This api help add a performance
+        """
+        args = request.args
+        query = UserSchoolPerformance.query.filter(UserSchoolPerformance.user_id == id)
+        return self.get_paginated_list(UserSchoolPerformance, page=args.get('page', Pagination.DefaultPage),
+                                       limit=args.get('limit', Pagination.DefaultLimit), init_query=query)
 
     def post(self, id):
-        return {'task': 'Add a school performance for a user'}
+        """
+            This api help add a performance
+        """
+        self.parser.add_argument('math', type=float, required=True, help=TranslationText.MathIsRequired)
+        self.parser.add_argument('physics', type=float, required=True, help=TranslationText.MathIsRequired)
+        self.parser.add_argument('chemistry', type=float, required=True, help=TranslationText.ChemistryIsRequired)
+        self.parser.add_argument('biology', type=float, required=True, help=TranslationText.BiologyIsRequired)
+        self.parser.add_argument('literature', type=float, required=True, help=TranslationText.LiteratureIsRequired)
+        self.parser.add_argument('history', type=float, required=True, help=TranslationText.HistoryIsRequired)
+        self.parser.add_argument('geography', type=float, required=True, help=TranslationText.GeographyIsRequired)
+        self.parser.add_argument('phylosophy', type=float, required=True, help=TranslationText.PhylosophyIsRequired)
+        self.parser.add_argument('art', type=float, required=True, help=TranslationText.ArtIsRequired)
+        self.parser.add_argument('foreign_language', type=int, required=True, help=TranslationText.ForeignIsRequired)
+        args = self.parser.parse_args()
+        args['user_id'] = id
+        user_performance = UserSchoolPerformance(**args)
+        self.user_performance_repository.save(user_performance)
+
+        return user_performance.to_dict()
 
 
-class UserRetrieveUpdateSchoolPerformance(Resource):
+class UserRetrieveUpdateSchoolPerformance(BaseResource):
+    parser = reqparse.RequestParser()
+    user_performance_repository = UserSchoolPerformanceRepository()
+    user_repository = UserRepository()
+
     def get(self, id):
-        return {'task': 'Get a school performance for a user'}
+        """
+            This api help add a performance
+        """
+        performance = UserSchoolPerformance.query.filter(UserSchoolPerformance.id == id).first()
+        if not performance:
+            abort(404, message=TranslationText.PerformanceNotFound)
+        return performance.to_dict()
 
     def put(self, id):
-        return {'task': 'Update a school performance for a user'}
+        """
+            This api help update a performance
+        """
+        user_performance = self.user_performance_repository.get(id)
+        if not user_performance:
+            abort(404, message=TranslationText.PerformanceNotFound)
+        self.parser.add_argument('math', type=float, required=True, help=TranslationText.MathIsRequired)
+        self.parser.add_argument('physics', type=float, required=True, help=TranslationText.MathIsRequired)
+        self.parser.add_argument('chemistry', type=float, required=True, help=TranslationText.ChemistryIsRequired)
+        self.parser.add_argument('biology', type=float, required=True, help=TranslationText.BiologyIsRequired)
+        self.parser.add_argument('literature', type=float, required=True, help=TranslationText.LiteratureIsRequired)
+        self.parser.add_argument('history', type=float, required=True, help=TranslationText.HistoryIsRequired)
+        self.parser.add_argument('geography', type=float, required=True, help=TranslationText.GeographyIsRequired)
+        self.parser.add_argument('phylosophy', type=float, required=True, help=TranslationText.PhylosophyIsRequired)
+        self.parser.add_argument('art', type=float, required=True, help=TranslationText.ArtIsRequired)
+        self.parser.add_argument('foreign_language', type=int, required=True, help=TranslationText.ForeignIsRequired)
+
+        args = self.parser.parse_args()
+        user_performance.math = args.get('math')
+        user_performance.physics = args.get('physics')
+        user_performance.chemistry = args.get('chemistry')
+        user_performance.biology = args.get('biology')
+        user_performance.literature = args.get('literature')
+        user_performance.history = args.get('history')
+        user_performance.geography = args.get('geography')
+        user_performance.phylosophy = args.get('phylosophy')
+        user_performance.art = args.get('art')
+
+        self.user_performance_repository.update(user_performance)
+
+        return user_performance.to_dict()
 
     def delete(self, id):
-        return {'task': 'Delete a school performance'}
+        """
+            This api help delete a performance
+        """
+        performance = self.user_performance_repository.get(id)
+        if not performance:
+            abort(404, message=TranslationText.PerformanceNotFound)
+        self.user_performance_repository.delete(performance)
+        return None
 
 
 class UserGetAdviceJobs(Resource):
