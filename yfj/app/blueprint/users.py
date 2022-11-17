@@ -263,14 +263,32 @@ class UserGetAdviceJobs(BaseResource):
             return {'jobs': list(job_earning_df.sort_values('earn', ascending=False).head(3)['job'])}
 
 
-class UserPostCurrentJobs(Resource):
+class UserPostCurrentJobs(BaseResource):
+    parser = reqparse.RequestParser()
+    user_repository = UserRepository()
+    user_performance_repository = UserSchoolPerformanceRepository()
+
     def post(self, id):
-        return {'task': 'Update current jobs'}
+        """
+            This api help input the current job for volunteer
+        """
+        user = self.user_repository.get(id)
+        self.parser.add_argument('jobs', action='append', required=True, help=TranslationText.JobIsRequired)
+        args = self.parser.parse_args()
+        if not user:
+            abort(404, message=TranslationText.UserNotFound)
+        performances = self.user_performance_repository.get_by_user_id(id)
+        if len(performances) == 0:
+            abort(400, message=TranslationText.PleaseInputAtLeastOnePerformanceBeforeYouUpdateYourJob)
+
+        user.jobs = args.get('jobs')
+        self.user_repository.update(user)
+        return user.to_dict()
 
 
 api.add_resource(UserListAdd, '')
-api.add_resource(UserRetrievedUpdate, '/<int:id>')
-api.add_resource(UserListAddSchoolPerformance, '/<int:id>/school_performances')
-api.add_resource(UserRetrieveUpdateSchoolPerformance, '/users/school_performances/<int:id>')
-api.add_resource(UserGetAdviceJobs, '/<int:id>/advices')
-api.add_resource(UserPostCurrentJobs, '/<int:id>/jobs')
+api.add_resource(UserRetrievedUpdate, '/<string:id>')
+api.add_resource(UserListAddSchoolPerformance, '/<string:id>/school_performances')
+api.add_resource(UserRetrieveUpdateSchoolPerformance, '/school_performances/<string:id>')
+api.add_resource(UserGetAdviceJobs, '/<string:id>/advices')
+api.add_resource(UserPostCurrentJobs, '/<string:id>/jobs')
