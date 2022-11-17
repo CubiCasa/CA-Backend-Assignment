@@ -2,22 +2,58 @@
 to the '/users' endpoint of HTTP REST API.
 """
 
-from flask import (
-    abort, Blueprint, request, Response, make_response, jsonify
-)
-from app.model import UserRepository
-from flask_restful import Api, Resource
+from flask import (Blueprint)
+from flask import request
+import pandas as pd
+import numpy as np
+from sklearn import linear_model
+
+from app.base.api_client import ApiClient
+from app.base.base_resource import BaseResource
+from app.base.constants import UserTypes, Genders, TranslationText, Pagination
+from app.base.custom_api import CustomApi
+from app.model import UserRepository, User
+from flask_restful import reqparse, abort
+
+from app.model.models import UserSchoolPerformance
+from app.model.user_school_performance_repository import UserSchoolPerformanceRepository
 
 bp = Blueprint('users', __name__, url_prefix='/users')
-api = Api(bp)
+api = CustomApi(bp)
 
 
-class UserListAdd(Resource):
+class UserListAdd(BaseResource):
+
     def get(self):
-        return {'task': 'get user list'}
+        """
+                This api get all users
+        """
+        args = request.args
+        return self.get_paginated_list(User, page=args.get('page', Pagination.DefaultPage),
+                                       limit=args.get('limit', Pagination.DefaultLimit))
 
     def post(self):
-        return {'task': 'add a user'}
+        """
+                This api help add a user
+        """
+        self.parser.add_argument('username', type=str, required=True, help='Username is required')
+        self.parser.add_argument('password', type=str, required=True, help='Password is required')
+        self.parser.add_argument('first_name', type=str, required=True, help='First name is required')
+        self.parser.add_argument('last_name', type=str, required=True, help='Last name is required')
+        self.parser.add_argument('email', type=str, required=True, help='Email is required')
+        self.parser.add_argument('address', type=str, required=False)
+        self.parser.add_argument('school_name', type=str, required=False)
+        self.parser.add_argument('user_type', type=int, required=True)
+        self.parser.add_argument('gender', type=int, required=True)
+        args = self.parser.parse_args()
+        user = User(username=args.get('username'), first_name=args.get('first_name'), last_name=args.get('last_name'),
+                    email=args.get('email'), address=args.get('address'), school_name=args.get('school_name'),
+                    user_type=UserTypes(args.get('user_type')), gender=Genders(args.get('gender')),
+                    password=args.get('password'))
+        user_repository = UserRepository()
+        user_repository.save(user)
+
+        return user.to_dict(rules=('-password',))
 
 
 class UserRetrievedUpdate(Resource):
