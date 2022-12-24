@@ -4,17 +4,18 @@ import random
 from datetime import date
 
 from faker import Faker
-
-from flask import Flask, send_file
+from flask import Flask
+from flask import send_file
+from flask.wrappers import Response
 
 fake = Faker()
 app = Flask(__name__)
 
 
-@app.route("/job_earnings")
-def get_job_earnings():
+@app.route('/job_earnings')
+def get_job_earnings() -> Response:
     year = date.today().year
-    filename = f"job_stats_{year}.json"
+    filename = f'job_stats_{year}.json'
 
     if not os.path.isfile(filename):
         jobs = {}
@@ -30,5 +31,5 @@ def get_job_earnings():
 
 
 if __name__ == '__main__':
-    port = os.environ.get('PORT', 8000)
+    port = os.environ.get('PORT', 8001)
     app.run(host='0.0.0.0', port=port)
