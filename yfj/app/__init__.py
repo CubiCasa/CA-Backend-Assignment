@@ -81,3 +81,6 @@ def init_blueprints(app: Flask) -> None:
     # error Handlers
     from .blueprint import index
     app.register_blueprint(index.bp)
+
+    from .blueprint import jobs
+    app.register_blueprint(jobs.bp)

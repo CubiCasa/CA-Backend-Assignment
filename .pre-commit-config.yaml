@@ -37,7 +37,5 @@ repos:
     rev: v0.991
     hooks:
     -   id: mypy
-        args:
-            - "--explicit-package-bases"
         exclude: ^tests/
         additional_dependencies: []
