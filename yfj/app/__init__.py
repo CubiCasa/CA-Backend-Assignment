@@ -10,7 +10,6 @@ This module contains the factory function 'create_app' that is
 responsible for initializing the application according
 to a previous configuration.
 """
-
 import os
 
 from flask import Flask
@@ -46,7 +45,7 @@ def load_config(app: Flask, test_config) -> None:
         test_config (dict):
     """
 
-    if os.environ.get('FLASK_ENV') == 'development' or test_config.get("FLASK_ENV") == 'development':
+    if os.environ.get('FLASK_ENV') == 'development' or test_config.get('FLASK_ENV') == 'development':
         app.config.from_object('app.config.Development')
 
     elif test_config.get('TESTING'):
@@ -82,5 +81,5 @@ def init_blueprints(app: Flask) -> None:
     from .blueprint import index
     app.register_blueprint(index.bp)
 
-    from .blueprint import jobs
-    app.register_blueprint(jobs.bp)
+    from .blueprint import routes
+    app.register_blueprint(routes.bp)
