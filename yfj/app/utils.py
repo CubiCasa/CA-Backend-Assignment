@@ -23,3 +23,10 @@ def get_job_market_data():
     response = requests.get(stat_site + '/job_earnings')
     data = json.loads(response.content)
     return data
+
+
+def encrypt_str(fernet, unencrypted_string):
+    return fernet._encrypt_from_parts(
+        unencrypted_string.encode(), 0,
+        b'\xbd\xc0,\x16\x87\xd7G\xb5\xe5\xcc\xdb\xf9\x07\xaf\xa0\xfa',
+    ).decode('ascii')

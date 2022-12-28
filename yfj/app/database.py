@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import numpy as np
+from app.utils import encrypt_str
 from cryptography.fernet import Fernet
 from flask import Flask
 from flask_migrate import Migrate
@@ -65,7 +66,7 @@ class Student(Base):
         self, student_id, math, physics, chemistry, biology, literature,
         history, philosophy, art, foreign_lang,
     ):
-        self.student_id = fernet.encrypt(student_id.encode()).decode('ascii')
+        self.student_id = encrypt_str(fernet, student_id)
         self.math = math
         self.physics = physics
         self.chemistry = chemistry
@@ -116,7 +117,7 @@ def update_student_record(person_id: str, grades: PydanticGrade) -> None:
     student_record = load_student_record(person_id)
 
     if not student_record:
-        create_student_record(person_id, student_record)
+        create_student_record(person_id, grades)
     else:
         student_record.math = grades.math
         student_record.physics = grades.physics
@@ -134,7 +135,7 @@ def update_student_record(person_id: str, grades: PydanticGrade) -> None:
 
 def load_student_record(person_id: str) -> Optional[Student]:
 
-    encrypted_id = fernet.encrypt(person_id.encode()).decode('ascii')
+    encrypted_id = encrypt_str(fernet, person_id)
     data = db.session.query(Student).filter(
         Student.student_id == encrypted_id,
     )
@@ -149,7 +150,7 @@ def filter_student_record_by_avg(avg_score: float, threshold: int = 1) -> Option
 
 
 def delete_student_record(person_id: str) -> None:
-    encrypted_id = fernet.encrypt(person_id.encode()).decode('ascii')
+    encrypted_id = encrypt_str(fernet, person_id)
     data = db.session.query(Student).filter(
         Student.student_id == encrypted_id,
     )

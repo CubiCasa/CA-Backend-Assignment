@@ -25,8 +25,7 @@ bp = Blueprint('jobs', __name__, url_prefix='')
 def advice_jobs(person_id: str) -> Response:
     advices = []
     default_advices = ['whatever you love!']
-
-    grades = Grade.parse_obj(flask_request.get_json())
+    grades = Grade.parse_obj(flask_request.json)
     avg_score = grades.avg_score()
     list_score = grades.get_list_score()
 
@@ -87,6 +86,7 @@ def add_jobs(person_id: str) -> Response:
     else:
         for job in input_jobs.jobs:
             result = find_job(job.name)
+            job.salary = result.salary
             update_job_record(person_id, result)
     result_msg = {
         'message': input_jobs.dict(),
