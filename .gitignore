@@ -1,0 +1,8 @@
+.idea/
+venv/
+.coverage
+coverage.xml
+yfi/tests/.pytest_cache
+yfi/tests/__pycache__
+yfi/coverage
+yfi/coverage.xml

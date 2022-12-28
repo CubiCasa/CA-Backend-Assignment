@@ -1,7 +1,5 @@
 """This module contains class whose instances will be used to
 load the settings according to the running environment. """
-
-
 import os
 
 from dotenv import load_dotenv
@@ -53,3 +51,14 @@ class Development(Default):
     SECRET_KEY = 'dev'
     JWT_SECRET_KEY = 'dev'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    ENCRYPT_KEY = os.environ.get('ENCRYPT_KEY')
+
+
+class Testing(Default):
+    load_dotenv('tests/test.env')  # loading .env
+
+    DEBUG = True
+    SECRET_KEY = 'dev'
+    JWT_SECRET_KEY = 'dev'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    ENCRYPT_KEY = os.environ.get('ENCRYPT_KEY')
