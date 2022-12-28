@@ -1,5 +1,9 @@
+import operator
+
+import numpy as np
 from app.database import create_student_record
 from app.database import delete_student_record
+from app.database import filter_student_record_by_avg
 from app.database import load_student_record
 from app.database import update_job_record
 from app.utils import find_job
@@ -9,8 +13,8 @@ from flask import jsonify
 from flask import request as flask_request
 from flask.wrappers import Response
 from flask_pydantic import validate
+from numpy.linalg import norm
 from pydantic_models.grades import Grade
-from pydantic_models.jobs import Advices
 from pydantic_models.jobs import InputJob
 
 bp = Blueprint('jobs', __name__, url_prefix='')
@@ -20,13 +24,38 @@ bp = Blueprint('jobs', __name__, url_prefix='')
 @validate()
 def advice_job(person_id: str) -> Response:
     grades = Grade.parse_obj(flask_request.get_json())
+    avg_score = grades.avg_score()
+    list_score = grades.get_list_score()
+
     create_student_record(person_id, grades)
-    # some computation
-    advices = Advices(
-        advices=[{'name': 'doctor'}, {'name': 'engineer'}, {'name': 'singer'}],
-    )
+    # filter down students with similar avg score
+    data = filter_student_record_by_avg(avg_score)
+
+    # no student with similar score -> send a general advices
+    if not data:
+        advices = [{'name': 'whatever you love!'}]
+    else:
+        jobs = {}
+        for student in data:
+            compare_list_score = student.get_list_score()
+            cosine_similarity = np.dot(list_score, compare_list_score) / \
+                (norm(list_score, axis=1) * norm(compare_list_score))
+
+            # filter down students with similar grades, add their jobs to recommendation.
+            # if 1 job appear many times, multiple salary to use as indicator to match jobs
+            if cosine_similarity > 0.9:
+                for job in student.jobs:
+                    if job.job_name not in jobs:
+                        jobs[job.job_name] = job.salary
+                    else:
+                        jobs[job.job_name] += job.salary
+        sorted_jobs = dict(
+            sorted(jobs.items(), key=operator.itemgetter(1), reverse=True),
+        )
+        advices = sorted_jobs.keys()[:3]
+
     result = {
-        'message': advices.dict(),
+        'message': advices,
         'status': 'success',
     }
     return jsonify(result)

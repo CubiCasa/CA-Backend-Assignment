@@ -3,6 +3,7 @@ using the SQLAlchemy library."""
 import os
 from typing import Optional
 
+import numpy as np
 from cryptography.fernet import Fernet
 from flask import Flask
 from flask_migrate import Migrate
@@ -10,6 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from pydantic_models.grades import Grade as PydanticGrade
 from pydantic_models.jobs import JobPydantic
 from sqlalchemy import Column
+from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -55,6 +57,7 @@ class Student(Base):
     philosophy = Column(Integer, nullable=False)
     art = Column(Integer, nullable=False)
     foreign_lang = Column(Integer, nullable=False)
+    average_score = Column(Float)
     jobs = relationship('Job', secondary='student_job')
 
     def __init__(
@@ -71,6 +74,16 @@ class Student(Base):
         self.philosophy = philosophy
         self.art = art
         self.foreign_lang = foreign_lang
+        self.average_score = (
+            math + physics + chemistry + biology +
+            literature + history + philosophy + art + foreign_lang
+        ) / 9
+
+    def get_list_score(self) -> np.array:
+        return np.array([
+            self.math, self.physics, self.chemistry, self.biology,
+            self.literature, self.history, self.philosophy, self.art, self.foreign_lang,
+        ])
 
 
 class Job(Base):
@@ -105,6 +118,14 @@ def load_student_record(person_id: str) -> Optional[Student]:
         Student.student_id == encrypted_id,
     )
     return data.first()
+
+
+def filter_student_record_by_avg(avg_score: float) -> Optional[list[Student]]:
+
+    data = db.session.query(Student).filter(
+        abs(avg_score - Student.average_score) <= 1,
+    )
+    return data.all()
 
 
 def delete_student_record(person_id: str) -> None:

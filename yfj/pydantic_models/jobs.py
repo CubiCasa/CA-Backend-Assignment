@@ -20,11 +20,3 @@ class InputJob(BaseModel):
         description='List of jobs that user update about their career path. '
                     'Must have at least 1 job.',
     )
-
-
-class Advices(BaseModel):
-    advices: list[JobPydantic] = Field(
-        max_items=3,
-        min_items=3,
-        description='List of 3 recommended jobs that our service returns to user.',
-    )
