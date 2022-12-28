@@ -49,7 +49,7 @@ def load_config(app: Flask, test_config) -> None:
         app.config.from_object('app.config.Development')
 
     elif test_config.get('TESTING'):
-        app.config.from_mapping(test_config)
+        app.config.from_object('app.config.Testing')
 
     else:
         app.config.from_object('app.config.Production')

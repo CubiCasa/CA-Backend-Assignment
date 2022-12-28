@@ -1,11 +1,11 @@
 import operator
 
 import numpy as np
-from app.database import create_student_record
 from app.database import delete_student_record
 from app.database import filter_student_record_by_avg
 from app.database import load_student_record
 from app.database import update_job_record
+from app.database import update_student_record
 from app.utils import find_job
 from flask import abort
 from flask import Blueprint
@@ -22,24 +22,27 @@ bp = Blueprint('jobs', __name__, url_prefix='')
 
 @bp.route('/<person_id>/advices', methods=['POST'])
 @validate()
-def advice_job(person_id: str) -> Response:
+def advice_jobs(person_id: str) -> Response:
+    advices = []
+    default_advices = ['whatever you love!']
+
     grades = Grade.parse_obj(flask_request.get_json())
     avg_score = grades.avg_score()
     list_score = grades.get_list_score()
 
-    create_student_record(person_id, grades)
+    update_student_record(person_id, grades)
+
     # filter down students with similar avg score
     data = filter_student_record_by_avg(avg_score)
 
     # no student with similar score -> send a general advices
-    if not data:
-        advices = [{'name': 'whatever you love!'}]
-    else:
+
+    if data:
         jobs = {}
         for student in data:
             compare_list_score = student.get_list_score()
             cosine_similarity = np.dot(list_score, compare_list_score) / \
-                (norm(list_score, axis=1) * norm(compare_list_score))
+                (norm(list_score) * norm(compare_list_score))
 
             # filter down students with similar grades, add their jobs to recommendation.
             # if 1 job appear many times, multiple salary to use as indicator to match jobs
@@ -52,8 +55,10 @@ def advice_job(person_id: str) -> Response:
         sorted_jobs = dict(
             sorted(jobs.items(), key=operator.itemgetter(1), reverse=True),
         )
-        advices = sorted_jobs.keys()[:3]
+        advices = list(sorted_jobs.keys())[:3]
 
+    if not advices:
+        advices = default_advices
     result = {
         'message': advices,
         'status': 'success',

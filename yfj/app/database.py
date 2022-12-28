@@ -13,6 +13,7 @@ from pydantic_models.jobs import JobPydantic
 from sqlalchemy import Column
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
+from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy.ext.declarative import declarative_base
@@ -111,6 +112,26 @@ def create_student_record(person_id: str, grades: PydanticGrade) -> None:
     return db.session.commit()
 
 
+def update_student_record(person_id: str, grades: PydanticGrade) -> None:
+    student_record = load_student_record(person_id)
+
+    if not student_record:
+        create_student_record(person_id, student_record)
+    else:
+        student_record.math = grades.math
+        student_record.physics = grades.physics
+        student_record.chemistry = grades.chemistry
+        student_record.biology = grades.biology
+        student_record.literature = grades.literature
+        student_record.history = grades.history
+        student_record.philosophy = grades.philosophy
+        student_record.art = grades.art
+        student_record.foreign_lang = grades.foreign_lang
+        student_record.average_score = grades.avg_score()
+        db.session.commit()
+    return None
+
+
 def load_student_record(person_id: str) -> Optional[Student]:
 
     encrypted_id = fernet.encrypt(person_id.encode()).decode('ascii')
@@ -120,10 +141,9 @@ def load_student_record(person_id: str) -> Optional[Student]:
     return data.first()
 
 
-def filter_student_record_by_avg(avg_score: float) -> Optional[list[Student]]:
-
+def filter_student_record_by_avg(avg_score: float, threshold: int = 1) -> Optional[list[Student]]:
     data = db.session.query(Student).filter(
-        abs(avg_score - Student.average_score) <= 1,
+        func.abs(avg_score - Student.average_score) <= threshold,
     )
     return data.all()
 
@@ -162,6 +182,5 @@ def update_job_record(person_id: str, job: JobPydantic) -> None:
     else:
         job_record.salary = job.salary
         job_record.students.append(student_record)
-        db.session.add(job_record)
         db.session.commit()
     return None

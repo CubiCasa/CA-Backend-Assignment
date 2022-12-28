@@ -1,47 +1,19 @@
-from unittest import mock
 from unittest.mock import call
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-import pytest
-from app import create_app
-from app.database import Student
 from pydantic_models.jobs import JobPydantic
 
 
-@pytest.fixture()
-def app():
-    app = create_app()
-    app.config.update({
-        'TESTING': True,
-    })
-    yield app
-
-
-@pytest.fixture
-def client(app):
-    return app.test_client()
-
-
 @patch('app.blueprint.routes.update_job_record')
+@patch('app.utils.get_job_market_data')
 @patch('app.blueprint.routes.load_student_record')
-def test_advice_job_request(
+def test_add_job(
         mock_load_student_record: MagicMock,
+        mock_get_job_market_data: MagicMock,
         mock_update_job_record: MagicMock,
         client,
 ):
-    mock_load_student_record.return_value = Student(
-        student_id='mockid',
-        math=10,
-        physics=10,
-        chemistry=10,
-        biology=10,
-        literature=10,
-        history=10,
-        philosophy=10,
-        art=10,
-        foreign_lang=10,
-    )
     input_jobs = {
         'jobs': [
             {'name': 'IT technical support officer'}, {
@@ -49,6 +21,11 @@ def test_advice_job_request(
             }, {'name': 'singer'},
         ],
     }
+    mock_get_job_market_data.return_value = [
+        ['IT technical support officer', 72000],
+        ['engineer', 50000],
+        ['singer', 50000],
+    ]
     client.post(
         '/1/jobs', json=input_jobs,
         headers={'Content-Type': 'application/json'},
@@ -58,17 +35,27 @@ def test_advice_job_request(
         call('1', JobPydantic(name='IT technical support officer', salary=72000)),
         call('1', JobPydantic(name='engineer', salary=50000)),
         call('1', JobPydantic(name='singer', salary=50000)),
-
     ])
 
 
-def test_delete_grade(
+@patch('app.blueprint.routes.load_student_record')
+def test_add_job_unknown_student(
+        mock_load_student_record: MagicMock,
         client,
 ):
-    with mock.patch('app.blueprint.routes.delete_student_record') as mock_db:
-        client.post(
-            '/1/delete_grades',
-            headers={'Content-Type': 'application/json'},
-        )
-        mock_db.assert_called_once()
-        mock_db.assert_called_with('1')
+    input_jobs = {
+        'jobs': [
+            {'name': 'IT technical support officer'}, {
+                'name': 'engineer',
+            }, {'name': 'singer'},
+        ],
+    }
+    mock_load_student_record.return_value = None
+
+    res = client.post(
+        '/1/jobs', json=input_jobs,
+        headers={'Content-Type': 'application/json'},
+    )
+    assert res.json == {
+        'message': "This student haven\'t had grades yet.", 'status': 'error',
+    }
